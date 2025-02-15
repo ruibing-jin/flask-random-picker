@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏环节</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin: 20px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: white;
+        }
+        #scenarios-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 20px;
+        }
+        .scenario {
+            width: 200px;
+            text-align: center;
+            transition: transform 0.2s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .scenario img {
+            width: 100%;
+            height: 150px;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            transition: transform 0.3s ease-in-out;
+        }
+        .scenario p {
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .highlight {
+            border: 3px solid yellow;
+            opacity: 1 !important;
+            transform: scale(1.2) rotate(5deg);
+            animation: pulse 0.5s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1.2) rotate(5deg); }
+            to { transform: scale(1.3) rotate(-5deg); }
+        }
+        .faded {
+            opacity: 0.3;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 18px;
+            margin-top: 20px;
+            cursor: pointer;
+            background: #ff4b2b;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
+        }
+        button:hover {
+            background: #ff416c;
+            transform: scale(1.1);
+        }
+        .flashing {
+            animation: flash 0.3s 6 alternate;
+        }
+        @keyframes flash {
+            from { opacity: 1; }
+            to { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🔥 游戏场景选择 🔥</h2>
+    <p>点击“开始”按钮随机选择一个场景</p >
+
+    <div id="scenarios-container">
+        <div class="scenario" id="校园生活">
+            <img src="static/images/1.JPG" alt="校园生活">
+            <p>校园生活</p >
+        </div>
+        <div class="scenario" id="网络安全">
+            <img src="static/images/2.JPG" alt="网络安全">
+            <p>网络安全</p >
+        </div>
+        <div class="scenario" id="朋友社交">
+            <img src="static/images/3.JPG" alt="朋友社交">
+            <p>朋友社交</p >
+        </div>
+        <div class="scenario" id="金钱物质">
+            <img src="static/images/4.JPG" alt="金钱物质">
+            <p>金钱物质</p >
+        </div>
+        <div class="scenario" id="家庭责任与诚信">
+            <img src="static/images/5.JPG" alt="家庭责任与诚信">
+            <p>家庭责任与诚信</p >
+        </div>
+    </div>
+
+    <!-- 🎮 场景抽签按钮 -->
+    <button id="startButton" onclick="toggleGame()">抽签</button>
+    
+    <!-- 🎵 游戏背景音乐播放/暂停按钮 -->
+    <button id="bgMusicButton" onclick="toggleBgMusic()">开始</button>
+
+    <!-- 🎵 音乐文件 -->
+    <audio id="bgMusic" loop>
+        <source src="static/audio/game.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="gameMusic">
+        <source src="static/audio/background.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        let scenarios = ["校园生活", "网络安全", "朋友社交", "金钱物质", "家庭责任与诚信"];
+        let interval = null;
+        let speed = 100;
+        let slowingDown = false;
+        let finalSelection = null;
+        let button = document.getElementById("startButton");
+        let bgMusicButton = document.getElementById("bgMusicButton");
+        let bgMusic = document.getElementById("bgMusic");
+        let gameMusic = document.getElementById("gameMusic");
+        let isBgMusicPlaying = false; // 是否播放背景音乐
+
+        function highlightRandomScenario() {
+            let scenarioElements = document.querySelectorAll(".scenario");
+
+            scenarioElements.forEach(el => {
+                el.classList.remove("highlight");
+                el.classList.add("faded");
+            });
+
+            let randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+            let selectedElement = document.getElementById(randomScenario);
+
+            selectedElement.classList.add("highlight");
+            selectedElement.classList.remove("faded");
+
+            if (slowingDown) {
+                speed += 100;
+                if (speed >= 1000) {
+                    clearInterval(interval);
+                    interval = null;
+                    slowingDown = false;
+                    finalSelection = selectedElement;
+                    button.innerText = "等待...";
+                    
+                    setTimeout(() => {
+                        finalSelection.classList.add("flashing");
+                        setTimeout(() => {
+                            finalSelection.classList.remove("flashing");
+                            button.innerText = "抽签";
+                        }, 1800);
+                    }, 500);
+
+                    // 🎵 停止抽取音乐
+                    gameMusic.pause();
+                    gameMusic.currentTime = 0;
+                } else {
+                    clearInterval(interval);
+                    interval = setInterval(highlightRandomScenario, speed);
+                }
+            }
+        }
+
+        function toggleGame() {
+            if (interval === null) {
+                speed = 100;
+                slowingDown = false;
+                interval = setInterval(highlightRandomScenario, speed);
+                button.innerText = "暂停";
+
+                // 🎵 开始播放抽取音乐
+                gameMusic.play();
+            } else if (!slowingDown) {
+                slowingDown = true;
+                button.innerText = "等待...";
+            }
+        }
+
+        function toggleBgMusic() {
+            if (isBgMusicPlaying) {
+                bgMusic.pause();
+                bgMusic.currentTime = 0;
+                bgMusicButton.innerText = "开始";
+            } else {
+                bgMusic.play();
+                bgMusicButton.innerText = "结束";
+            }
+            isBgMusicPlaying = !isBgMusicPlaying;
+        }
+    </script>
+
+</body>
+</html>
